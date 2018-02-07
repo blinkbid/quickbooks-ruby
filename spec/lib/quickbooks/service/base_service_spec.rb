@@ -9,7 +9,7 @@ describe Quickbooks::Service::BaseService do
 
   describe "#url_for_query" do
     shared_examples "encoding the query correctly" do |domain|
-      let(:correct_url) { "https://#{domain}/v3/company/1234/query?query=SELECT+*+FROM+Customer+where+Name+%3D+%27John%27" }
+      let(:correct_url) { "https://#{domain}/v3/company/1234/query?query=SELECT+%2A+FROM+Customer+where+Name+%3D+%27John%27" }
 
       it "correctly encodes the query" do
         subject.realm_id = 1234
@@ -43,7 +43,32 @@ describe Quickbooks::Service::BaseService do
 
     it "correctly initializes with an access_token and realm" do
       @service.company_id.should == "9991111222"
-      @service.oauth.is_a?(OAuth::AccessToken).should == true
+      @service.oauth.should_not be_nil
+    end
+  end
+
+  describe '#verify_multipart!' do
+    let(:service) { Quickbooks::Service::BaseService.new }
+
+    if ENV['OAUTH'] == '1'
+      it 'is not called' do
+        service.should_not_receive(:verify_multipart!)
+        service.access_token = construct_oauth
+      end
+    else
+
+      it 'rebuilds the connection' do
+        oauth = construct_oauth
+        oauth.client.connection.should_receive(:build)
+        service.access_token = oauth
+      end
+
+      it 'does not rebuild the connection' do
+        oauth = construct_oauth
+        oauth.client.connection.builder.lock!
+        oauth.client.connection.should_not_receive(:build)
+        service.access_token = oauth
+      end
     end
   end
 
@@ -184,7 +209,7 @@ describe Quickbooks::Service::BaseService do
 
     before do
       construct_service :vendor
-      stub_request(:get, @service.url_for_query, ["200", "OK"], fixture("vendors.xml"))
+      stub_http_request(:get, @service.url_for_query, ["200", "OK"], fixture("vendors.xml"))
     end
 
     it "should not log by default" do

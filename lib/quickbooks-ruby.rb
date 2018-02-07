@@ -7,12 +7,19 @@ require 'uri'
 require 'date'
 require 'forwardable'
 require 'oauth'
+require 'oauth2'
 require 'net/http/post/multipart'
 require 'quickbooks/util/collection'
 require 'quickbooks/util/logging'
 require 'quickbooks/util/http_encoding_helper'
 require 'quickbooks/util/name_entity'
 require 'quickbooks/util/query_builder'
+
+#== OAuth Responses
+require 'quickbooks/service/responses/oauth_http_response'
+require 'quickbooks/service/responses/methods'
+require 'quickbooks/service/responses/oauth1_http_response'
+require 'quickbooks/service/responses/oauth2_http_response'
 
 #== Models
 require 'quickbooks/model/definition'
@@ -176,7 +183,6 @@ require 'quickbooks/service/refund_receipt_change'
 
 module Quickbooks
   @@sandbox_mode = false
-
   @@logger = nil
 
   class << self
@@ -233,6 +239,12 @@ module Quickbooks
     def initialize(msg)
       self.message = msg
       super(msg)
+    end
+  end
+
+  class InvalidOauthAccessTokenObject < StandardError
+    def initialize(access_token)
+      super("Expected access token to be an instance of OAuth::AccessToken or OAuth2::AccessToken, got #{access_token.class}.")
     end
   end
 

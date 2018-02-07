@@ -8,8 +8,10 @@ end
 
 require 'rubygems'
 require 'rspec'
-require 'fakeweb'
+#require 'fakeweb'
+require 'webmock/rspec'
 require 'oauth'
+require 'oauth2'
 require 'quickbooks-ruby'
 require 'json'
 require 'pry'
